@@ -72,11 +72,41 @@
         a:hover {
             text-decoration: underline;
         }
+        .previous-entry {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .previous-entry h3 {
+            margin-top: 0;
+            color: #666;
+        }
+        .previous-entry-field {
+            margin-bottom: 10px;
+        }
+        .previous-entry-field strong {
+            color: #333;
+        }
+        .readonly-field {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
     <a href="index.html">← Back to Home</a>
     <h1>Time Tracking Form</h1>
+    
+    <div id="previousEntry" class="previous-entry" style="display: none;">
+        <h3>Previous Entry</h3>
+        <div class="previous-entry-field">
+            <strong>Time:</strong> <span id="prevTimeRange"></span>
+        </div>
+        <div class="previous-entry-field">
+            <strong>Todo:</strong> <span id="prevTodo"></span>
+        </div>
+    </div>
     
     <form id="timeTrackingForm">
         <label>
@@ -100,8 +130,8 @@
         </label>
         
         <label>
-            Done:
-            <textarea id="done" name="done" placeholder="What did you accomplish?"></textarea>
+            Done (Updates Previous Entry):
+            <textarea id="done" name="done" placeholder="What did you accomplish in the previous time window?"></textarea>
         </label>
         
         <label>
@@ -121,7 +151,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, Timestamp, query, orderBy, limit, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -136,6 +166,8 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        let previousEntryId = null;
 
         // Set today's date as default
         document.getElementById('date').valueAsDate = new Date();
@@ -170,8 +202,40 @@
             document.getElementById('endTime').value = formatTime(endTime);
         }
         
+        // Load and display previous entry
+        async function loadPreviousEntry() {
+            try {
+                const q = query(collection(db, 'hourly_tracking'), orderBy('StartTime', 'desc'), limit(1));
+                const querySnapshot = await getDocs(q);
+                
+                if (!querySnapshot.empty) {
+                    const doc = querySnapshot.docs[0];
+                    const data = doc.data();
+                    previousEntryId = doc.id;
+                    
+                    // Format times
+                    const startTime = data.StartTime.toDate();
+                    const endTime = data.EndTime.toDate();
+                    const formatTime = (date) => {
+                        const h = date.getHours().toString().padStart(2, '0');
+                        const m = date.getMinutes().toString().padStart(2, '0');
+                        return `${h}:${m}`;
+                    };
+                    
+                    // Display previous entry info
+                    document.getElementById('prevTimeRange').textContent = 
+                        `${formatTime(startTime)} - ${formatTime(endTime)}`;
+                    document.getElementById('prevTodo').textContent = data.Todo || '(No todo)';
+                    document.getElementById('previousEntry').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading previous entry:', error);
+            }
+        }
+        
         // Set default times on page load
         setDefaultTimes();
+        loadPreviousEntry();
 
         // Handle form submission
         document.getElementById('timeTrackingForm').addEventListener('submit', async (e) => {
@@ -185,20 +249,28 @@
                 const startTime = document.getElementById('startTime').value;
                 const endTime = document.getElementById('endTime').value;
                 const todo = document.getElementById('todo').value;
-                const done = document.getElementById('done').value;
+                const doneValue = document.getElementById('done').value;
                 const forfeit = document.getElementById('forfeit').value;
                 const freedom = document.getElementById('freedom').value;
+                
+                // Update previous entry's done field if we have a value
+                if (previousEntryId && doneValue) {
+                    const prevDocRef = doc(db, 'hourly_tracking', previousEntryId);
+                    await updateDoc(prevDocRef, {
+                        Done: doneValue
+                    });
+                }
                 
                 // Create datetime objects
                 const startDateTime = new Date(`${date}T${startTime}`);
                 const endDateTime = new Date(`${date}T${endTime}`);
                 
-                // Add document to Firestore
+                // Add new document to Firestore (with empty Done field)
                 await addDoc(collection(db, 'hourly_tracking'), {
                     StartTime: Timestamp.fromDate(startDateTime),
                     EndTime: Timestamp.fromDate(endDateTime),
                     Todo: todo,
-                    Done: done,
+                    Done: '', // Always empty for new entries
                     Forfeit: forfeit,
                     Freedom: freedom
                 });
@@ -211,6 +283,9 @@
                 document.getElementById('timeTrackingForm').reset();
                 document.getElementById('date').valueAsDate = new Date();
                 setDefaultTimes();
+                
+                // Reload previous entry (which is now the entry we just created)
+                loadPreviousEntry();
                 
             } catch (error) {
                 // Show error message
