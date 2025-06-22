@@ -139,6 +139,39 @@
 
         // Set today's date as default
         document.getElementById('date').valueAsDate = new Date();
+        
+        // Auto-populate start and end times
+        function setDefaultTimes() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            
+            // Round down to nearest 30 minutes
+            const roundedMinutes = minutes < 30 ? 0 : 30;
+            
+            // Create start time
+            const startTime = new Date();
+            startTime.setHours(hours);
+            startTime.setMinutes(roundedMinutes);
+            startTime.setSeconds(0);
+            
+            // Create end time (1 hour later)
+            const endTime = new Date(startTime);
+            endTime.setHours(endTime.getHours() + 1);
+            
+            // Format times as HH:MM
+            const formatTime = (date) => {
+                const h = date.getHours().toString().padStart(2, '0');
+                const m = date.getMinutes().toString().padStart(2, '0');
+                return `${h}:${m}`;
+            };
+            
+            document.getElementById('startTime').value = formatTime(startTime);
+            document.getElementById('endTime').value = formatTime(endTime);
+        }
+        
+        // Set default times on page load
+        setDefaultTimes();
 
         // Handle form submission
         document.getElementById('timeTrackingForm').addEventListener('submit', async (e) => {
@@ -177,6 +210,7 @@
                 // Reset form
                 document.getElementById('timeTrackingForm').reset();
                 document.getElementById('date').valueAsDate = new Date();
+                setDefaultTimes();
                 
             } catch (error) {
                 // Show error message
