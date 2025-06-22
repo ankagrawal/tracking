@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracking Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .date-selector {
+            padding: 8px 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .time-cell {
+            white-space: nowrap;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+        a {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .empty-cell {
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html">← Back to Home</a>
+    <h1>Time Tracking Report</h1>
+    
+    <div class="controls">
+        <label for="dateSelector">Select Date: </label>
+        <select id="dateSelector" class="date-selector">
+            <option value="">Loading dates...</option>
+        </select>
+    </div>
+    
+    <div id="reportContent">
+        <div class="loading">Loading entries...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, getDocs, where, Timestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAv2tgr09braWjrKSsyZNbw9ZgdGyrZIDM",
+            authDomain: "tracking-17d26.firebaseapp.com",
+            projectId: "tracking-17d26",
+            storageBucket: "tracking-17d26.firebasestorage.app",
+            messagingSenderId: "506730679610",
+            appId: "1:506730679610:web:8f28cbc0a5f05f37ab1403"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const dateSelector = document.getElementById('dateSelector');
+        const reportContent = document.getElementById('reportContent');
+
+        // Format date for display
+        function formatDate(date) {
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        // Format time for display
+        function formatTime(date) {
+            const h = date.getHours().toString().padStart(2, '0');
+            const m = date.getMinutes().toString().padStart(2, '0');
+            return `${h}:${m}`;
+        }
+
+        // Get all unique dates from the database
+        async function loadAvailableDates() {
+            try {
+                const q = query(collection(db, 'hourly_tracking'), orderBy('StartTime', 'desc'));
+                const querySnapshot = await getDocs(q);
+                
+                const uniqueDates = new Map();
+                let latestDate = null;
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const startTime = data.StartTime.toDate();
+                    const dateStr = startTime.toDateString();
+                    const dateKey = startTime.toISOString().split('T')[0];
+                    
+                    if (!uniqueDates.has(dateKey)) {
+                        uniqueDates.set(dateKey, dateStr);
+                    }
+                    
+                    if (!latestDate) {
+                        latestDate = dateKey;
+                    }
+                });
+                
+                // Clear and populate dropdown
+                dateSelector.innerHTML = '';
+                
+                if (uniqueDates.size === 0) {
+                    dateSelector.innerHTML = '<option value="">No entries found</option>';
+                    displayNoData();
+                    return;
+                }
+                
+                // Add today as first option if not already in data
+                const today = new Date().toISOString().split('T')[0];
+                const todayStr = new Date().toDateString();
+                
+                if (!uniqueDates.has(today)) {
+                    const option = document.createElement('option');
+                    option.value = today;
+                    option.textContent = `${formatDate(new Date())} (Today)`;
+                    dateSelector.appendChild(option);
+                }
+                
+                // Add all dates from database
+                Array.from(uniqueDates.entries())
+                    .sort((a, b) => b[0].localeCompare(a[0]))
+                    .forEach(([dateKey, dateStr]) => {
+                        const option = document.createElement('option');
+                        option.value = dateKey;
+                        const date = new Date(dateStr);
+                        option.textContent = formatDate(date);
+                        if (dateKey === today) {
+                            option.textContent += ' (Today)';
+                        }
+                        dateSelector.appendChild(option);
+                    });
+                
+                // Select today if it has entries, otherwise select the latest date
+                if (uniqueDates.has(today)) {
+                    dateSelector.value = today;
+                    await loadEntriesForDate(today);
+                } else if (latestDate) {
+                    dateSelector.value = latestDate;
+                    await loadEntriesForDate(latestDate);
+                }
+                
+            } catch (error) {
+                console.error('Error loading dates:', error);
+                dateSelector.innerHTML = '<option value="">Error loading dates</option>';
+            }
+        }
+
+        // Load entries for a specific date
+        async function loadEntriesForDate(dateStr) {
+            try {
+                reportContent.innerHTML = '<div class="loading">Loading entries...</div>';
+                
+                const selectedDate = new Date(dateStr);
+                const startOfDay = new Date(selectedDate);
+                startOfDay.setHours(0, 0, 0, 0);
+                const endOfDay = new Date(selectedDate);
+                endOfDay.setHours(23, 59, 59, 999);
+                
+                const q = query(
+                    collection(db, 'hourly_tracking'),
+                    where('StartTime', '>=', Timestamp.fromDate(startOfDay)),
+                    where('StartTime', '<=', Timestamp.fromDate(endOfDay)),
+                    orderBy('StartTime', 'asc')
+                );
+                
+                const querySnapshot = await getDocs(q);
+                
+                if (querySnapshot.empty) {
+                    displayNoData();
+                    return;
+                }
+                
+                // Create table
+                let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time Range</th>
+                                <th>Todo</th>
+                                <th>Done</th>
+                                <th>Forfeit</th>
+                                <th>Freedom</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const startTime = data.StartTime.toDate();
+                    const endTime = data.EndTime.toDate();
+                    
+                    tableHTML += `
+                        <tr>
+                            <td class="time-cell">${formatTime(startTime)} - ${formatTime(endTime)}</td>
+                            <td>${data.Todo || '<span class="empty-cell">-</span>'}</td>
+                            <td>${data.Done || '<span class="empty-cell">-</span>'}</td>
+                            <td>${data.Forfeit || '<span class="empty-cell">-</span>'}</td>
+                            <td>${data.Freedom || '<span class="empty-cell">-</span>'}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `
+                        </tbody>
+                    </table>
+                `;
+                
+                reportContent.innerHTML = tableHTML;
+                
+            } catch (error) {
+                console.error('Error loading entries:', error);
+                reportContent.innerHTML = '<div class="no-data">Error loading entries. Please try again.</div>';
+            }
+        }
+
+        function displayNoData() {
+            reportContent.innerHTML = '<div class="no-data">No entries found for this date.</div>';
+        }
+
+        // Event listener for date selection
+        dateSelector.addEventListener('change', (e) => {
+            const selectedDate = e.target.value;
+            if (selectedDate) {
+                loadEntriesForDate(selectedDate);
+            }
+        });
+
+        // Load initial data
+        loadAvailableDates();
+    </script>
+</body>
+</html>
