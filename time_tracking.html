@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Tracking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-weight: bold;
+        }
+        input, textarea {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        a {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html">← Back to Home</a>
+    <h1>Time Tracking Form</h1>
+    
+    <form id="timeTrackingForm">
+        <label>
+            Date:
+            <input type="date" id="date" name="date" required>
+        </label>
+        
+        <label>
+            Start Time:
+            <input type="time" id="startTime" name="startTime" required>
+        </label>
+        
+        <label>
+            End Time:
+            <input type="time" id="endTime" name="endTime" required>
+        </label>
+        
+        <label>
+            Todo:
+            <textarea id="todo" name="todo" placeholder="What did you plan to do?"></textarea>
+        </label>
+        
+        <label>
+            Done:
+            <textarea id="done" name="done" placeholder="What did you accomplish?"></textarea>
+        </label>
+        
+        <label>
+            Forfeit:
+            <textarea id="forfeit" name="forfeit" placeholder="What did you forfeit?"></textarea>
+        </label>
+        
+        <label>
+            Freedom:
+            <textarea id="freedom" name="freedom" placeholder="How did you maintain freedom?"></textarea>
+        </label>
+        
+        <button type="submit">Submit Entry</button>
+    </form>
+    
+    <div id="message"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAv2tgr09braWjrKSsyZNbw9ZgdGyrZIDM",
+            authDomain: "tracking-17d26.firebaseapp.com",
+            projectId: "tracking-17d26",
+            storageBucket: "tracking-17d26.firebasestorage.app",
+            messagingSenderId: "506730679610",
+            appId: "1:506730679610:web:8f28cbc0a5f05f37ab1403"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Set today's date as default
+        document.getElementById('date').valueAsDate = new Date();
+
+        // Handle form submission
+        document.getElementById('timeTrackingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const messageDiv = document.getElementById('message');
+            
+            try {
+                // Get form values
+                const date = document.getElementById('date').value;
+                const startTime = document.getElementById('startTime').value;
+                const endTime = document.getElementById('endTime').value;
+                const todo = document.getElementById('todo').value;
+                const done = document.getElementById('done').value;
+                const forfeit = document.getElementById('forfeit').value;
+                const freedom = document.getElementById('freedom').value;
+                
+                // Create datetime objects
+                const startDateTime = new Date(`${date}T${startTime}`);
+                const endDateTime = new Date(`${date}T${endTime}`);
+                
+                // Add document to Firestore
+                await addDoc(collection(db, 'hourly_tracking'), {
+                    StartTime: Timestamp.fromDate(startDateTime),
+                    EndTime: Timestamp.fromDate(endDateTime),
+                    Todo: todo,
+                    Done: done,
+                    Forfeit: forfeit,
+                    Freedom: freedom
+                });
+                
+                // Show success message
+                messageDiv.className = 'message success';
+                messageDiv.textContent = 'Entry saved successfully!';
+                
+                // Reset form
+                document.getElementById('timeTrackingForm').reset();
+                document.getElementById('date').valueAsDate = new Date();
+                
+            } catch (error) {
+                // Show error message
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Error saving entry: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>
