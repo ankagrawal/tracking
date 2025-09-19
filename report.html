@@ -355,11 +355,11 @@
                 reportContent.innerHTML = '<div class="loading">Loading entries...</div>';
                 entriesData.clear();
                 
-                const selectedDate = new Date(dateStr);
-                const startOfDay = new Date(selectedDate);
-                startOfDay.setHours(0, 0, 0, 0);
-                const endOfDay = new Date(selectedDate);
-                endOfDay.setHours(23, 59, 59, 999);
+                // Parse the date string properly to avoid timezone issues
+                // dateStr is in format "YYYY-MM-DD"
+                const [year, month, day] = dateStr.split('-').map(Number);
+                const startOfDay = new Date(year, month - 1, day, 0, 0, 0, 0);
+                const endOfDay = new Date(year, month - 1, day, 23, 59, 59, 999);
                 
                 const q = query(
                     collection(db, 'hourly_tracking'),
