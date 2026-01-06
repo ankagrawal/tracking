@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Manage Questions</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .navigation a {
+            color: #4CAF50;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-btn {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .filter-btn.active {
+            background-color: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        .add-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .add-btn:hover {
+            background-color: #1976D2;
+        }
+        .questions-list {
+            display: grid;
+            gap: 15px;
+        }
+        .question-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 4px;
+            background: white;
+        }
+        .question-card.inactive {
+            background-color: #f5f5f5;
+            opacity: 0.7;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        .question-id {
+            font-weight: bold;
+            color: #666;
+            font-size: 14px;
+        }
+        .question-forms {
+            display: flex;
+            gap: 5px;
+        }
+        .form-badge {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .form-badge.start {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .form-badge.end {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+        .question-text {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        .question-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #666;
+        }
+        .question-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .edit-btn, .toggle-btn, .delete-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .edit-btn:hover {
+            background-color: #f0f0f0;
+        }
+        .toggle-btn {
+            background-color: #ff9800;
+            color: white;
+            border-color: #ff9800;
+        }
+        .toggle-btn:hover {
+            background-color: #f57c00;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #000;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 15px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+        }
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .save-btn:hover {
+            background-color: #45a049;
+        }
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <a href="index.html">← Home</a> | 
+            <a href="start_day.html">Start Day</a> | 
+            <a href="end_day.html">End Day</a> | 
+            <a href="daily_reports.html">Reports</a>
+        </div>
+        
+        <h1>Manage Questions</h1>
+        
+        <div class="toolbar">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All Questions</button>
+                <button class="filter-btn" data-filter="start">Start Day Only</button>
+                <button class="filter-btn" data-filter="end">End Day Only</button>
+                <button class="filter-btn" data-filter="shared">Shared</button>
+                <button class="filter-btn" data-filter="active">Active</button>
+                <button class="filter-btn" data-filter="inactive">Inactive</button>
+            </div>
+            <button class="add-btn" onclick="openAddModal()">+ Add New Question</button>
+        </div>
+
+        <div id="message"></div>
+        
+        <div id="questionsList" class="questions-list">
+            <div style="text-align: center; padding: 40px; color: #666;">Loading questions...</div>
+        </div>
+    </div>
+
+    <!-- Edit/Add Question Modal -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Edit Question</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            
+            <form id="questionForm">
+                <input type="hidden" id="questionId" name="id">
+                
+                <div class="form-group">
+                    <label for="questionText">Question Text *</label>
+                    <textarea id="questionText" name="text" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Forms *</label>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="forms" value="start" id="formStart">
+                            Start Day
+                        </label>
+                        <label>
+                            <input type="checkbox" name="forms" value="end" id="formEnd">
+                            End Day
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="planning">Planning</option>
+                        <option value="goals">Goals</option>
+                        <option value="productivity">Productivity</option>
+                        <option value="mindset">Mindset</option>
+                        <option value="emotional">Emotional</option>
+                        <option value="mindfulness">Mindfulness</option>
+                        <option value="learning">Learning</option>
+                        <option value="health">Health</option>
+                        <option value="personal">Personal</option>
+                        <option value="reflection">Reflection</option>
+                        <option value="meta">Meta</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="orderStart">Order in Start Form</label>
+                    <input type="number" id="orderStart" name="order_start" min="1" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label for="orderEnd">Order in End Form</label>
+                    <input type="number" id="orderEnd" name="order_end" min="1" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="required" name="required">
+                        Required Question
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="active" name="active" checked>
+                        Active (Show in forms)
+                    </label>
+                </div>
+                
+                <button type="submit" class="save-btn">Save Question</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAv2tgr09braWjrKSsyZNbw9ZgdGyrZIDM",
+            authDomain: "tracking-17d26.firebaseapp.com",
+            projectId: "tracking-17d26",
+            storageBucket: "tracking-17d26.firebasestorage.app",
+            messagingSenderId: "506730679610",
+            appId: "1:506730679610:web:8f28cbc0a5f05f37ab1403"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let allQuestions = [];
+        let currentFilter = 'all';
+
+        // Make functions global
+        window.openAddModal = openAddModal;
+        window.closeModal = closeModal;
+        window.editQuestion = editQuestion;
+        window.toggleQuestion = toggleQuestion;
+        window.deleteQuestion = deleteQuestion;
+
+        // Load all questions
+        async function loadQuestions() {
+            try {
+                const snapshot = await getDocs(collection(db, 'form_questions'));
+                allQuestions = [];
+                
+                snapshot.forEach(doc => {
+                    allQuestions.push({ ...doc.data(), id: doc.id });
+                });
+                
+                // Sort by a combination of forms and order
+                allQuestions.sort((a, b) => {
+                    const aOrder = Math.min(a.order_start || 999, a.order_end || 999);
+                    const bOrder = Math.min(b.order_start || 999, b.order_end || 999);
+                    return aOrder - bOrder;
+                });
+                
+                displayQuestions();
+            } catch (error) {
+                console.error('Error loading questions:', error);
+                showMessage('Error loading questions', 'error');
+            }
+        }
+
+        // Display questions based on filter
+        function displayQuestions() {
+            const container = document.getElementById('questionsList');
+            let filteredQuestions = allQuestions;
+            
+            switch(currentFilter) {
+                case 'start':
+                    filteredQuestions = allQuestions.filter(q => q.forms.includes('start') && !q.forms.includes('end'));
+                    break;
+                case 'end':
+                    filteredQuestions = allQuestions.filter(q => q.forms.includes('end') && !q.forms.includes('start'));
+                    break;
+                case 'shared':
+                    filteredQuestions = allQuestions.filter(q => q.forms.includes('start') && q.forms.includes('end'));
+                    break;
+                case 'active':
+                    filteredQuestions = allQuestions.filter(q => q.active);
+                    break;
+                case 'inactive':
+                    filteredQuestions = allQuestions.filter(q => !q.active);
+                    break;
+            }
+            
+            if (filteredQuestions.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">No questions found</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredQuestions.map(q => `
+                <div class="question-card ${!q.active ? 'inactive' : ''}">
+                    <div class="question-header">
+                        <div>
+                            <span class="question-id">${q.id}</span>
+                            <div class="question-forms">
+                                ${q.forms.includes('start') ? '<span class="form-badge start">START</span>' : ''}
+                                ${q.forms.includes('end') ? '<span class="form-badge end">END</span>' : ''}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            ${q.required ? '<span style="color: red;">Required</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="question-text">${q.text}</div>
+                    <div class="question-meta">
+                        <span>Category: ${q.category || 'none'}</span>
+                        ${q.order_start ? `<span>Start Order: ${q.order_start}</span>` : ''}
+                        ${q.order_end ? `<span>End Order: ${q.order_end}</span>` : ''}
+                    </div>
+                    <div class="question-actions">
+                        <button class="edit-btn" onclick="editQuestion('${q.id}')">Edit</button>
+                        <button class="toggle-btn" onclick="toggleQuestion('${q.id}', ${!q.active})">
+                            ${q.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button class="delete-btn" onclick="deleteQuestion('${q.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                displayQuestions();
+            });
+        });
+
+        // Open add modal
+        function openAddModal() {
+            document.getElementById('modalTitle').textContent = 'Add New Question';
+            document.getElementById('questionForm').reset();
+            document.getElementById('questionId').value = '';
+            document.getElementById('active').checked = true;
+            document.getElementById('questionModal').style.display = 'block';
+        }
+
+        // Open edit modal
+        function editQuestion(id) {
+            const question = allQuestions.find(q => q.id === id);
+            if (!question) return;
+            
+            document.getElementById('modalTitle').textContent = 'Edit Question';
+            document.getElementById('questionId').value = question.id;
+            document.getElementById('questionText').value = question.text;
+            document.getElementById('category').value = question.category || 'planning';
+            document.getElementById('orderStart').value = question.order_start || '';
+            document.getElementById('orderEnd').value = question.order_end || '';
+            document.getElementById('required').checked = question.required || false;
+            document.getElementById('active').checked = question.active !== false;
+            
+            // Set form checkboxes
+            document.getElementById('formStart').checked = question.forms.includes('start');
+            document.getElementById('formEnd').checked = question.forms.includes('end');
+            
+            document.getElementById('questionModal').style.display = 'block';
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('questionModal').style.display = 'none';
+        }
+
+        // Toggle question active state
+        async function toggleQuestion(id, newState) {
+            try {
+                await updateDoc(doc(db, 'form_questions', id), {
+                    active: newState,
+                    modified: new Date().toISOString()
+                });
+                
+                showMessage(`Question ${newState ? 'activated' : 'deactivated'} successfully`, 'success');
+                await loadQuestions();
+            } catch (error) {
+                console.error('Error toggling question:', error);
+                showMessage('Error updating question', 'error');
+            }
+        }
+
+        // Delete question
+        async function deleteQuestion(id) {
+            if (!confirm('Are you sure you want to delete this question? This cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                await deleteDoc(doc(db, 'form_questions', id));
+                showMessage('Question deleted successfully', 'success');
+                await loadQuestions();
+            } catch (error) {
+                console.error('Error deleting question:', error);
+                showMessage('Error deleting question', 'error');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('questionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const id = formData.get('id') || generateQuestionId(formData.get('text'));
+            
+            // Get selected forms
+            const forms = [];
+            if (document.getElementById('formStart').checked) forms.push('start');
+            if (document.getElementById('formEnd').checked) forms.push('end');
+            
+            if (forms.length === 0) {
+                alert('Please select at least one form');
+                return;
+            }
+            
+            const questionData = {
+                id: id,
+                text: formData.get('text'),
+                type: 'textarea',
+                forms: forms,
+                category: formData.get('category'),
+                order_start: parseInt(formData.get('order_start')) || null,
+                order_end: parseInt(formData.get('order_end')) || null,
+                required: document.getElementById('required').checked,
+                active: document.getElementById('active').checked,
+                modified: new Date().toISOString()
+            };
+            
+            // Add created timestamp for new questions
+            if (!formData.get('id')) {
+                questionData.created = new Date().toISOString();
+                questionData.version = "1.0";
+            }
+            
+            try {
+                await setDoc(doc(db, 'form_questions', id), questionData);
+                showMessage('Question saved successfully', 'success');
+                closeModal();
+                await loadQuestions();
+            } catch (error) {
+                console.error('Error saving question:', error);
+                showMessage('Error saving question', 'error');
+            }
+        });
+
+        // Generate question ID from text
+        function generateQuestionId(text) {
+            return text.toLowerCase()
+                      .substring(0, 50)
+                      .replace(/[^a-z0-9]+/g, '_')
+                      .replace(/^_+|_+$/g, '');
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            setTimeout(() => {
+                messageDiv.className = '';
+                messageDiv.textContent = '';
+            }, 3000);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('questionModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Initialize
+        loadQuestions();
+    </script>
+</body>
+</html>

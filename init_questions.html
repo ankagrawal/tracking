@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initialize Questions Database</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>Initialize Questions Database</h1>
+    <p>This will populate the Firestore database with all questions from your Start Day and End Day forms.</p>
+    <button id="initBtn">Initialize Questions</button>
+    <div id="status"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAv2tgr09braWjrKSsyZNbw9ZgdGyrZIDM",
+            authDomain: "tracking-17d26.firebaseapp.com",
+            projectId: "tracking-17d26",
+            storageBucket: "tracking-17d26.firebasestorage.app",
+            messagingSenderId: "506730679610",
+            appId: "1:506730679610:web:8f28cbc0a5f05f37ab1403"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Define all questions with their properties
+        const questions = [
+            // Shared questions (appear in both forms)
+            {
+                id: "date",
+                text: "Date",
+                type: "date",
+                forms: ["start", "end"],
+                category: "meta",
+                order_start: 1,
+                order_end: 1,
+                required: false,
+                active: true
+            },
+            {
+                id: "focus_time",
+                text: "Did you follow focus time today? If yes, what worked? If not, how to do it? What stopped you? How will you make it happen tomorrow?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "productivity",
+                order_start: 12,
+                order_end: 11,
+                required: false,
+                active: true
+            },
+            {
+                id: "time_control",
+                text: "Were you in control of your time today? If yes, what worked? If not, how to do it? What stopped you? How will you make it happen tomorrow?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "productivity",
+                order_start: 13,
+                order_end: 13,
+                required: false,
+                active: true
+            },
+            {
+                id: "mindfulness",
+                text: "Did you follow mindfulness every hour and able to record? What were the learnings? How to make it inevitable?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "mindfulness",
+                order_start: 11,
+                order_end: 12,
+                required: false,
+                active: true
+            },
+            {
+                id: "emotions_control",
+                text: "Did anything make you feel rushed or strong emotions today? If yes, what worked? If not, how to do it? What stopped you? How will you make it happen tomorrow?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "emotional",
+                order_start: 14,
+                order_end: 10,
+                required: false,
+                active: true
+            },
+            {
+                id: "affirmations",
+                text: "What are some affirmations I need to remember? How can I make them inevitable?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "mindset",
+                order_start: 10,
+                order_end: 14,
+                required: false,
+                active: true
+            },
+            {
+                id: "mistakes_errors",
+                text: "What were the mistakes/errors made in coding or other tasks? How to avoid them? How to log them in the failure modes? (CHATN)",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "learning",
+                order_start: 15,
+                order_end: 15,
+                required: false,
+                active: true
+            },
+            {
+                id: "work_8_hours",
+                text: "Did you work for 8 hours today? If not why? How to fix it tomorrow?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "productivity",
+                order_start: 18,
+                order_end: 21,
+                required: false,
+                active: true
+            },
+            {
+                id: "food_logging",
+                text: "Did you log your food today? If not why? How to fix it tomorrow?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "health",
+                order_start: 19,
+                order_end: 22,
+                required: false,
+                active: true
+            },
+            {
+                id: "weekly_goals_progress",
+                text: "How much progress towards weekly goals?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "goals",
+                order_start: 16,
+                order_end: 23,
+                required: false,
+                active: true
+            },
+            {
+                id: "accept_limitations",
+                text: "Did you accept any limitation today? Be relentlessly resourceful and don't accept any external limitations",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "mindset",
+                order_start: 20,
+                order_end: 25,
+                required: false,
+                active: true
+            },
+            {
+                id: "checklists_follow",
+                text: "What are the checklists to follow? What's the plan to follow them?",
+                type: "textarea",
+                forms: ["start", "end"],
+                category: "planning",
+                order_start: 21,
+                order_end: 26,
+                required: false,
+                active: true
+            },
+
+            // Start Day only questions
+            {
+                id: "daily_hourly_plan",
+                text: "What is the daily hourly plan for today?",
+                type: "textarea",
+                forms: ["start"],
+                category: "planning",
+                order_start: 2,
+                required: true,
+                active: true
+            },
+            {
+                id: "forfeit_plan",
+                text: "What is the plan for forfeit? (list)",
+                type: "textarea",
+                forms: ["start"],
+                category: "planning",
+                order_start: 3,
+                required: false,
+                active: true
+            },
+            {
+                id: "time_box_order",
+                text: "What's the time box and order of things to do today (get it using the notion template)?",
+                type: "textarea",
+                forms: ["start"],
+                category: "planning",
+                order_start: 4,
+                required: true,
+                active: true
+            },
+            {
+                id: "accomplish_today",
+                text: "What are the things you want to accomplish today?",
+                type: "textarea",
+                forms: ["start"],
+                category: "goals",
+                order_start: 5,
+                required: true,
+                active: true
+            },
+            {
+                id: "things_go_wrong",
+                text: "How will things go wrong today? What forfeit and alarms to create?",
+                type: "textarea",
+                forms: ["start"],
+                category: "planning",
+                order_start: 6,
+                required: false,
+                active: true
+            },
+            {
+                id: "weekly_list_progress",
+                text: "How are you doing with the weekly list of things to accomplish?",
+                type: "textarea",
+                forms: ["start"],
+                category: "goals",
+                order_start: 7,
+                required: false,
+                active: true
+            },
+            {
+                id: "intentions_focus",
+                text: "What are my intentions of the day? What should I focus on? What alarms to create?",
+                type: "textarea",
+                forms: ["start"],
+                category: "mindset",
+                order_start: 8,
+                required: false,
+                active: true
+            },
+            {
+                id: "stuff_to_avoid",
+                text: "What are some stuff I should avoid today?",
+                type: "textarea",
+                forms: ["start"],
+                category: "planning",
+                order_start: 9,
+                required: false,
+                active: true
+            },
+            {
+                id: "monthly_goals_progress",
+                text: "What will be the progress towards monthly goals?",
+                type: "textarea",
+                forms: ["start"],
+                category: "goals",
+                order_start: 17,
+                required: false,
+                active: true
+            },
+            {
+                id: "key_projects_focus",
+                text: "What do you want to accomplish on key projects today? Have you carved out enough time for that after meetings etc. Do you need to cancel any meeting for this and create a focusmate for this?",
+                type: "textarea",
+                forms: ["start"],
+                category: "productivity",
+                order_start: 22,
+                required: false,
+                active: true
+            },
+            {
+                id: "phone_lock_hours",
+                text: "What are the hours where you are going to lock your phones. Do you have alarms for that? (Maybe lock phone after 3pm)",
+                type: "textarea",
+                forms: ["start"],
+                category: "productivity",
+                order_start: 23,
+                required: false,
+                active: true
+            },
+            {
+                id: "checklists_today",
+                text: "What are the checklists you need to see for today?",
+                type: "textarea",
+                forms: ["start"],
+                category: "planning",
+                order_start: 24,
+                required: false,
+                active: true
+            },
+            {
+                id: "key_results_plan",
+                text: "What's the plan to get to 3+2+1 for key projects? Also what the key results to achieve today (must be achieved).",
+                type: "textarea",
+                forms: ["start"],
+                category: "goals",
+                order_start: 25,
+                required: false,
+                active: true
+            },
+            {
+                id: "time_waste_windows",
+                text: "What are the windows where there are max chances of time waste (immediately after meeting, immediately after lunch etc)? How are you going to control that? (focusmate)?",
+                type: "textarea",
+                forms: ["start"],
+                category: "productivity",
+                order_start: 26,
+                required: false,
+                active: true
+            },
+            {
+                id: "naisha_time",
+                text: "Did we spend enough time with Naisha? What are the challenges there?",
+                type: "textarea",
+                forms: ["start"],
+                category: "personal",
+                order_start: 27,
+                required: false,
+                active: true
+            },
+            {
+                id: "noteplan_pending",
+                text: "What are the pending items from noteplan from yesterday? Have we logged them appropriately?",
+                type: "textarea",
+                forms: ["start"],
+                category: "planning",
+                order_start: 28,
+                required: false,
+                active: true
+            },
+
+            // End Day only questions
+            {
+                id: "gratitude",
+                text: "Thanks & Gratitude",
+                type: "textarea",
+                forms: ["end"],
+                category: "mindset",
+                order_end: 2,
+                required: false,
+                active: true
+            },
+            {
+                id: "high_low_experiences",
+                text: "What were the \"high\" and \"low\" -- the best and worst experiences today?",
+                type: "textarea",
+                forms: ["end"],
+                category: "reflection",
+                order_end: 3,
+                required: false,
+                active: true
+            },
+            {
+                id: "better_tomorrow",
+                text: "What should I do tomorrow to make it a better day?",
+                type: "textarea",
+                forms: ["end"],
+                category: "planning",
+                order_end: 4,
+                required: false,
+                active: true
+            },
+            {
+                id: "what_went_wrong",
+                text: "What went wrong today? What are the things to avoid and how to avoid them?",
+                type: "textarea",
+                forms: ["end"],
+                category: "learning",
+                order_end: 5,
+                required: false,
+                active: true
+            },
+            {
+                id: "what_went_well",
+                text: "What went well today? How to repeat them?",
+                type: "textarea",
+                forms: ["end"],
+                category: "learning",
+                order_end: 6,
+                required: false,
+                active: true
+            },
+            {
+                id: "motivated_energized",
+                text: "What made me motivated and energized today?",
+                type: "textarea",
+                forms: ["end"],
+                category: "emotional",
+                order_end: 7,
+                required: false,
+                active: true
+            },
+            {
+                id: "angry_frustrated",
+                text: "What made me angry and frustrated?",
+                type: "textarea",
+                forms: ["end"],
+                category: "emotional",
+                order_end: 8,
+                required: false,
+                active: true
+            },
+            {
+                id: "waste_time_lose_focus",
+                text: "What caused me to waste time and lose focus today?",
+                type: "textarea",
+                forms: ["end"],
+                category: "productivity",
+                order_end: 9,
+                required: false,
+                active: true
+            },
+            {
+                id: "stomach_health",
+                text: "How are things going with stomach health?",
+                type: "textarea",
+                forms: ["end"],
+                category: "health",
+                order_end: 16,
+                required: false,
+                active: true
+            },
+            {
+                id: "completed_planned",
+                text: "Did I complete all my planned activities? If not why?",
+                type: "textarea",
+                forms: ["end"],
+                category: "productivity",
+                order_end: 17,
+                required: false,
+                active: true
+            },
+            {
+                id: "accomplished_today",
+                text: "What did I accomplish today?",
+                type: "textarea",
+                forms: ["end"],
+                category: "reflection",
+                order_end: 18,
+                required: false,
+                active: true
+            },
+            {
+                id: "focus_tomorrow",
+                text: "What should I focus on tomorrow?",
+                type: "textarea",
+                forms: ["end"],
+                category: "planning",
+                order_end: 19,
+                required: false,
+                active: true
+            },
+            {
+                id: "inspired_energized",
+                text: "What inspired and energized me today?",
+                type: "textarea",
+                forms: ["end"],
+                category: "emotional",
+                order_end: 20,
+                required: false,
+                active: true
+            },
+            {
+                id: "quarterly_goals",
+                text: "How much progress towards quarterly goals?",
+                type: "textarea",
+                forms: ["end"],
+                category: "goals",
+                order_end: 24,
+                required: false,
+                active: true
+            }
+        ];
+
+        document.getElementById('initBtn').addEventListener('click', async () => {
+            const statusDiv = document.getElementById('status');
+            const btn = document.getElementById('initBtn');
+            
+            try {
+                btn.disabled = true;
+                statusDiv.className = 'status info';
+                statusDiv.textContent = 'Initializing questions...';
+
+                let successCount = 0;
+                let errorCount = 0;
+
+                for (const question of questions) {
+                    try {
+                        // Use setDoc with merge: true to create or update
+                        await setDoc(doc(db, 'form_questions', question.id), {
+                            ...question,
+                            created: new Date().toISOString(),
+                            modified: new Date().toISOString(),
+                            version: "1.0"
+                        }, { merge: true });
+                        successCount++;
+                        console.log(`Successfully added/updated question: ${question.id}`);
+                    } catch (error) {
+                        console.error(`Error adding question ${question.id}:`, error);
+                        errorCount++;
+                    }
+                }
+
+                statusDiv.className = errorCount > 0 ? 'status error' : 'status success';
+                statusDiv.innerHTML = `
+                    <strong>Initialization Complete!</strong><br>
+                    Successfully processed: ${successCount} questions<br>
+                    Errors: ${errorCount}<br><br>
+                    ${errorCount > 0 ? '<p style="color: red;">Please check the browser console for error details.</p>' : ''}
+                    You can now:<br>
+                    - <a href="start_day.html">Fill Start Day Form</a><br>
+                    - <a href="end_day.html">Fill End Day Form</a><br>
+                    - <a href="admin.html">Manage Questions</a><br>
+                    - <a href="daily_reports.html">View Reports</a>
+                `;
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = 'Error initializing questions: ' + error.message;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

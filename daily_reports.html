@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Reports</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .navigation a {
+            color: #4CAF50;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+        .filters {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="date"], select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .view-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            color: #666;
+            font-size: 16px;
+        }
+        .tab-btn.active {
+            color: #4CAF50;
+            border-bottom-color: #4CAF50;
+        }
+        .report-content {
+            min-height: 400px;
+        }
+        .day-report {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .day-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .form-section {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .form-section:last-child {
+            border-bottom: none;
+        }
+        .form-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        .question-answer {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .question-label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .answer-text {
+            color: #333;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .comparison-side {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+        }
+        .comparison-side.start {
+            background-color: #e8f5e9;
+        }
+        .comparison-side.end {
+            background-color: #fff3e0;
+        }
+        .comparison-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .shared-question {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .question-search {
+            margin-bottom: 20px;
+        }
+        .question-search select {
+            width: 100%;
+            padding: 10px;
+        }
+        .export-btn {
+            background-color: #2196F3;
+            margin-left: 10px;
+        }
+        .export-btn:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <a href="index.html">← Home</a> | 
+            <a href="start_day.html">Start Day</a> | 
+            <a href="end_day.html">End Day</a> | 
+            <a href="admin.html">Admin</a>
+        </div>
+        
+        <h1>Daily Reports</h1>
+        
+        <div class="filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>From:</label>
+                    <input type="date" id="dateFrom">
+                </div>
+                <div class="filter-group">
+                    <label>To:</label>
+                    <input type="date" id="dateTo">
+                </div>
+                <button onclick="loadReports()">Load Reports</button>
+                <button class="export-btn" onclick="exportReports()">Export to CSV</button>
+            </div>
+        </div>
+        
+        <div class="view-tabs">
+            <button class="tab-btn active" data-view="timeline">Timeline View</button>
+            <button class="tab-btn" data-view="comparison">Compare Start vs End</button>
+            <button class="tab-btn" data-view="question">By Question</button>
+        </div>
+        
+        <div id="reportContent" class="report-content">
+            <div class="loading">Select dates and click "Load Reports" to view data</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAv2tgr09braWjrKSsyZNbw9ZgdGyrZIDM",
+            authDomain: "tracking-17d26.firebaseapp.com",
+            projectId: "tracking-17d26",
+            storageBucket: "tracking-17d26.firebasestorage.app",
+            messagingSenderId: "506730679610",
+            appId: "1:506730679610:web:8f28cbc0a5f05f37ab1403"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentView = 'timeline';
+        let responses = [];
+        let questions = {};
+
+        // Make functions global
+        window.loadReports = loadReports;
+        window.exportReports = exportReports;
+
+        // Initialize date inputs
+        function initializeDates() {
+            const today = new Date();
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = weekAgo.toISOString().split('T')[0];
+        }
+
+        // Load questions mapping
+        async function loadQuestions() {
+            try {
+                const snapshot = await getDocs(collection(db, 'form_questions'));
+                questions = {};
+                snapshot.forEach(doc => {
+                    questions[doc.id] = doc.data();
+                });
+            } catch (error) {
+                console.error('Error loading questions:', error);
+            }
+        }
+
+        // Load reports
+        async function loadReports() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            
+            if (!dateFrom || !dateTo) {
+                alert('Please select both dates');
+                return;
+            }
+            
+            document.getElementById('reportContent').innerHTML = '<div class="loading">Loading reports...</div>';
+            
+            try {
+                // Load questions if not already loaded
+                if (Object.keys(questions).length === 0) {
+                    await loadQuestions();
+                }
+                
+                // Query responses
+                const q = query(
+                    collection(db, 'daily_reflections'),
+                    where('date', '>=', dateFrom),
+                    where('date', '<=', dateTo),
+                    orderBy('date', 'desc')
+                );
+                
+                const snapshot = await getDocs(q);
+                responses = [];
+                snapshot.forEach(doc => {
+                    responses.push({ id: doc.id, ...doc.data() });
+                });
+                
+                displayReports();
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                document.getElementById('reportContent').innerHTML = '<div class="no-data">Error loading reports</div>';
+            }
+        }
+
+        // Display reports based on current view
+        function displayReports() {
+            if (responses.length === 0) {
+                document.getElementById('reportContent').innerHTML = '<div class="no-data">No data found for selected dates</div>';
+                return;
+            }
+            
+            switch(currentView) {
+                case 'timeline':
+                    displayTimelineView();
+                    break;
+                case 'comparison':
+                    displayComparisonView();
+                    break;
+                case 'question':
+                    displayQuestionView();
+                    break;
+            }
+        }
+
+        // Timeline view - shows all responses chronologically
+        function displayTimelineView() {
+            const groupedByDate = {};
+            responses.forEach(r => {
+                if (!groupedByDate[r.date]) {
+                    groupedByDate[r.date] = { start: null, end: null };
+                }
+                groupedByDate[r.date][r.formType] = r;
+            });
+            
+            let html = '';
+            Object.keys(groupedByDate).sort().reverse().forEach(date => {
+                const dayData = groupedByDate[date];
+                html += `<div class="day-report">`;
+                html += `<div class="day-header">${formatDate(date)}</div>`;
+                
+                if (dayData.start) {
+                    html += `<div class="form-section">`;
+                    html += `<div class="form-title">Start Day Responses</div>`;
+                    html += renderResponses(dayData.start.answers, 'start');
+                    html += `</div>`;
+                }
+                
+                if (dayData.end) {
+                    html += `<div class="form-section">`;
+                    html += `<div class="form-title">End Day Responses</div>`;
+                    html += renderResponses(dayData.end.answers, 'end');
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+            });
+            
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        // Comparison view - shows start vs end side by side
+        function displayComparisonView() {
+            const groupedByDate = {};
+            responses.forEach(r => {
+                if (!groupedByDate[r.date]) {
+                    groupedByDate[r.date] = { start: null, end: null };
+                }
+                groupedByDate[r.date][r.formType] = r;
+            });
+            
+            let html = '';
+            Object.keys(groupedByDate).sort().reverse().forEach(date => {
+                const dayData = groupedByDate[date];
+                if (!dayData.start || !dayData.end) return; // Skip days without both forms
+                
+                html += `<div class="day-report">`;
+                html += `<div class="day-header">${formatDate(date)}</div>`;
+                
+                // Find shared questions
+                const sharedQuestions = Object.keys(questions).filter(qId => 
+                    questions[qId].forms.includes('start') && 
+                    questions[qId].forms.includes('end') &&
+                    (dayData.start.answers[qId] || dayData.end.answers[qId])
+                );
+                
+                if (sharedQuestions.length > 0) {
+                    html += `<div class="form-section">`;
+                    html += `<div class="form-title">Shared Questions Comparison</div>`;
+                    
+                    sharedQuestions.forEach(qId => {
+                        const question = questions[qId];
+                        html += `<div class="shared-question">`;
+                        html += `<div class="question-label">${question.text}</div>`;
+                        html += `<div class="comparison-container">`;
+                        html += `<div class="comparison-side start">`;
+                        html += `<strong>Morning:</strong><br>`;
+                        html += `<div class="answer-text">${dayData.start.answers[qId] || 'No response'}</div>`;
+                        html += `</div>`;
+                        html += `<div class="comparison-side end">`;
+                        html += `<strong>Evening:</strong><br>`;
+                        html += `<div class="answer-text">${dayData.end.answers[qId] || 'No response'}</div>`;
+                        html += `</div>`;
+                        html += `</div>`;
+                        html += `</div>`;
+                    });
+                    
+                    html += `</div>`;
+                }
+                
+                html += `</div>`;
+            });
+            
+            if (html === '') {
+                html = '<div class="no-data">No days found with both start and end responses for comparison</div>';
+            }
+            
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        // Question view - shows responses for a specific question
+        function displayQuestionView() {
+            // Create question selector
+            let html = '<div class="question-search">';
+            html += '<select id="questionSelect" onchange="displayQuestionResponses()">';
+            html += '<option value="">Select a question...</option>';
+            
+            Object.keys(questions).forEach(qId => {
+                const q = questions[qId];
+                if (q.active) {
+                    const forms = q.forms.join(', ');
+                    html += `<option value="${qId}">[${forms}] ${q.text}</option>`;
+                }
+            });
+            
+            html += '</select>';
+            html += '</div>';
+            html += '<div id="questionResponses"></div>';
+            
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        // Display responses for selected question
+        window.displayQuestionResponses = function() {
+            const questionId = document.getElementById('questionSelect').value;
+            if (!questionId) {
+                document.getElementById('questionResponses').innerHTML = '';
+                return;
+            }
+            
+            const question = questions[questionId];
+            let html = `<h3>${question.text}</h3>`;
+            
+            const relevantResponses = responses.filter(r => r.answers[questionId]);
+            
+            if (relevantResponses.length === 0) {
+                html += '<div class="no-data">No responses found for this question</div>';
+            } else {
+                relevantResponses.forEach(r => {
+                    html += `<div class="question-answer">`;
+                    html += `<div class="question-label">${formatDate(r.date)} - ${r.formType === 'start' ? 'Morning' : 'Evening'}</div>`;
+                    html += `<div class="answer-text">${r.answers[questionId]}</div>`;
+                    html += `</div>`;
+                });
+            }
+            
+            document.getElementById('questionResponses').innerHTML = html;
+        };
+
+        // Render responses
+        function renderResponses(answers, formType) {
+            let html = '';
+            const relevantQuestions = Object.keys(questions).filter(qId => 
+                questions[qId].forms.includes(formType) && answers[qId]
+            );
+            
+            // Sort by order
+            relevantQuestions.sort((a, b) => {
+                const orderA = formType === 'start' ? questions[a].order_start : questions[a].order_end;
+                const orderB = formType === 'start' ? questions[b].order_start : questions[b].order_end;
+                return (orderA || 999) - (orderB || 999);
+            });
+            
+            relevantQuestions.forEach(qId => {
+                const question = questions[qId];
+                html += `<div class="question-answer">`;
+                html += `<div class="question-label">${question.text}</div>`;
+                html += `<div class="answer-text">${answers[qId]}</div>`;
+                html += `</div>`;
+            });
+            
+            return html;
+        }
+
+        // Export to CSV
+        function exportReports() {
+            if (responses.length === 0) {
+                alert('No data to export. Please load reports first.');
+                return;
+            }
+            
+            let csv = 'Date,Form Type,Question,Answer\n';
+            
+            responses.forEach(r => {
+                Object.keys(r.answers).forEach(qId => {
+                    const question = questions[qId];
+                    const questionText = question ? question.text : qId;
+                    const answer = r.answers[qId].replace(/"/g, '""'); // Escape quotes
+                    csv += `"${r.date}","${r.formType}","${questionText}","${answer}"\n`;
+                });
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `daily_reports_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentView = e.target.dataset.view;
+                if (responses.length > 0) {
+                    displayReports();
+                }
+            });
+        });
+
+        // Initialize
+        initializeDates();
+        loadQuestions();
+    </script>
+</body>
+</html>
