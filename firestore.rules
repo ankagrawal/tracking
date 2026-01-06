@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read access to everyone, but write access only from your GitHub Pages domain
+    match /hourly_tracking/{document=**} {
+      // Anyone can read the data
+      allow read: if true;
+      
+      // Only allow writes from your GitHub Pages domain
+      allow write: if request.auth != null || 
+                     request.headers['origin'] == 'https://ankagrawal.github.io' ||
+                     request.headers['origin'] == 'http://localhost' ||
+                     request.headers['origin'] == 'http://127.0.0.1';
+    }
+  }
+}
