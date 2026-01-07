@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Tracking Reports</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .navigation a {
+            color: #4CAF50;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+        .filters {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+        }
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        label {
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="date"], select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .view-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            color: #666;
+            font-size: 16px;
+        }
+        .tab-btn.active {
+            color: #4CAF50;
+            border-bottom-color: #4CAF50;
+        }
+        .report-content {
+            min-height: 400px;
+        }
+        .day-report {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .day-header {
+            background-color: #2196F3;
+            color: white;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .time-section {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .time-section:last-child {
+            border-bottom: none;
+        }
+        .time-label {
+            font-weight: bold;
+            color: #1976D2;
+            margin-bottom: 15px;
+            text-transform: capitalize;
+        }
+        .entry-card {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+        .entry-time {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .entry-field {
+            margin-bottom: 10px;
+        }
+        .field-label {
+            font-weight: bold;
+            color: #333;
+            margin-right: 5px;
+        }
+        .field-content {
+            color: #555;
+            line-height: 1.5;
+        }
+        .followup-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background-color: #ff9800;
+            color: white;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+        .category-report {
+            margin-bottom: 30px;
+        }
+        .category-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #4CAF50;
+        }
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .export-btn {
+            background-color: #2196F3;
+            margin-left: 10px;
+        }
+        .export-btn:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <a href="index.html">← Home</a> | 
+            <a href="mind_tracking.html">Add Entry</a> | 
+            <a href="start_day.html">Start Day</a> | 
+            <a href="end_day.html">End Day</a>
+        </div>
+        
+        <h1>Mind Tracking Reports</h1>
+        
+        <div class="filters">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>From:</label>
+                    <input type="date" id="dateFrom">
+                </div>
+                <div class="filter-group">
+                    <label>To:</label>
+                    <input type="date" id="dateTo">
+                </div>
+                <div class="filter-group">
+                    <label>Followup Only:</label>
+                    <input type="checkbox" id="followupOnly">
+                </div>
+                <button onclick="loadReports()">Load Reports</button>
+                <button class="export-btn" onclick="exportReports()">Export CSV</button>
+            </div>
+        </div>
+        
+        <div class="view-tabs">
+            <button class="tab-btn active" data-view="timeline">By Day</button>
+            <button class="tab-btn" data-view="category">By Category</button>
+            <button class="tab-btn" data-view="patterns">Patterns</button>
+        </div>
+        
+        <div id="reportContent" class="report-content">
+            <div class="loading">Select dates and click "Load Reports" to view data</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAv2tgr09braWjrKSsyZNbw9ZgdGyrZIDM",
+            authDomain: "tracking-17d26.firebaseapp.com",
+            projectId: "tracking-17d26",
+            storageBucket: "tracking-17d26.firebasestorage.app",
+            messagingSenderId: "506730679610",
+            appId: "1:506730679610:web:8f28cbc0a5f05f37ab1403"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let currentView = 'timeline';
+        let entries = [];
+
+        // Make functions global
+        window.loadReports = loadReports;
+        window.exportReports = exportReports;
+
+        // Initialize date inputs
+        function initializeDates() {
+            const today = new Date();
+            const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('dateTo').value = today.toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = weekAgo.toISOString().split('T')[0];
+        }
+
+        // Load reports
+        async function loadReports() {
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+            const followupOnly = document.getElementById('followupOnly').checked;
+            
+            if (!dateFrom || !dateTo) {
+                alert('Please select both dates');
+                return;
+            }
+            
+            document.getElementById('reportContent').innerHTML = '<div class="loading">Loading reports...</div>';
+            
+            try {
+                // Query entries
+                const q = query(
+                    collection(db, 'mind_tracking'),
+                    where('date', '>=', dateFrom),
+                    where('date', '<=', dateTo),
+                    orderBy('date', 'desc'),
+                    orderBy('timestamp', 'desc')
+                );
+                
+                const snapshot = await getDocs(q);
+                entries = [];
+                snapshot.forEach(doc => {
+                    const data = { id: doc.id, ...doc.data() };
+                    
+                    // Filter for followup if needed
+                    if (!followupOnly || 
+                        data.distractions_followup || 
+                        data.concerns_followup || 
+                        data.to_plan_followup || 
+                        data.fear_followup) {
+                        entries.push(data);
+                    }
+                });
+                
+                displayReports();
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                document.getElementById('reportContent').innerHTML = '<div class="no-data">Error loading reports</div>';
+            }
+        }
+
+        // Display reports based on current view
+        function displayReports() {
+            if (entries.length === 0) {
+                document.getElementById('reportContent').innerHTML = '<div class="no-data">No data found for selected criteria</div>';
+                return;
+            }
+            
+            switch(currentView) {
+                case 'timeline':
+                    displayTimelineView();
+                    break;
+                case 'category':
+                    displayCategoryView();
+                    break;
+                case 'patterns':
+                    displayPatternsView();
+                    break;
+            }
+        }
+
+        // Timeline view - shows entries grouped by day
+        function displayTimelineView() {
+            const groupedByDate = {};
+            entries.forEach(entry => {
+                if (!groupedByDate[entry.date]) {
+                    groupedByDate[entry.date] = {};
+                }
+                const timeOfDay = entry.time_of_day || 'unknown';
+                if (!groupedByDate[entry.date][timeOfDay]) {
+                    groupedByDate[entry.date][timeOfDay] = [];
+                }
+                groupedByDate[entry.date][timeOfDay].push(entry);
+            });
+            
+            let html = '';
+            Object.keys(groupedByDate).sort().reverse().forEach(date => {
+                html += `<div class="day-report">`;
+                html += `<div class="day-header">${formatDate(date)}</div>`;
+                
+                const timeOrder = ['morning', 'afternoon', 'evening', 'night', 'early_morning'];
+                timeOrder.forEach(timeOfDay => {
+                    if (groupedByDate[date][timeOfDay]) {
+                        html += `<div class="time-section">`;
+                        html += `<div class="time-label">${timeOfDay.replace('_', ' ')}</div>`;
+                        
+                        groupedByDate[date][timeOfDay].forEach(entry => {
+                            html += renderEntryCard(entry);
+                        });
+                        
+                        html += `</div>`;
+                    }
+                });
+                
+                html += `</div>`;
+            });
+            
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        // Category view - shows entries grouped by category
+        function displayCategoryView() {
+            const categories = ['distractions', 'concerns', 'to_plan', 'fear'];
+            let html = '';
+            
+            categories.forEach(category => {
+                const categoryEntries = entries.filter(e => e[category]);
+                
+                if (categoryEntries.length > 0) {
+                    html += `<div class="category-report">`;
+                    html += `<div class="category-title">${category.replace('_', ' ').toUpperCase()}</div>`;
+                    
+                    categoryEntries.forEach(entry => {
+                        html += `<div class="entry-card">`;
+                        html += `<div class="entry-time">${formatDate(entry.date)} - ${formatTime(entry.timestamp)}</div>`;
+                        html += `<div class="field-content">${entry[category]}</div>`;
+                        if (entry[category + '_followup']) {
+                            html += `<span class="followup-badge">FOLLOWUP NEEDED</span>`;
+                        }
+                        html += `</div>`;
+                    });
+                    
+                    html += `</div>`;
+                }
+            });
+            
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        // Patterns view - shows statistics and patterns
+        function displayPatternsView() {
+            // Calculate statistics
+            const stats = {
+                total: entries.length,
+                withFollowup: entries.filter(e => 
+                    e.distractions_followup || e.concerns_followup || 
+                    e.to_plan_followup || e.fear_followup
+                ).length,
+                byTimeOfDay: {},
+                byCategory: {
+                    distractions: entries.filter(e => e.distractions).length,
+                    concerns: entries.filter(e => e.concerns).length,
+                    to_plan: entries.filter(e => e.to_plan).length,
+                    fear: entries.filter(e => e.fear).length
+                }
+            };
+            
+            // Count by time of day
+            entries.forEach(e => {
+                const tod = e.time_of_day || 'unknown';
+                stats.byTimeOfDay[tod] = (stats.byTimeOfDay[tod] || 0) + 1;
+            });
+            
+            let html = '<div class="summary-stats">';
+            html += `<div class="stat-card">`;
+            html += `<div class="stat-number">${stats.total}</div>`;
+            html += `<div class="stat-label">Total Entries</div>`;
+            html += `</div>`;
+            
+            html += `<div class="stat-card">`;
+            html += `<div class="stat-number">${stats.withFollowup}</div>`;
+            html += `<div class="stat-label">Need Followup</div>`;
+            html += `</div>`;
+            
+            Object.keys(stats.byCategory).forEach(cat => {
+                html += `<div class="stat-card">`;
+                html += `<div class="stat-number">${stats.byCategory[cat]}</div>`;
+                html += `<div class="stat-label">${cat.replace('_', ' ')}</div>`;
+                html += `</div>`;
+            });
+            
+            html += '</div>';
+            
+            // Time of day distribution
+            html += '<div class="category-report">';
+            html += '<div class="category-title">Entries by Time of Day</div>';
+            Object.keys(stats.byTimeOfDay).forEach(tod => {
+                html += `<div class="entry-field">`;
+                html += `<span class="field-label">${tod.replace('_', ' ')}:</span>`;
+                html += `<span class="field-content">${stats.byTimeOfDay[tod]} entries</span>`;
+                html += `</div>`;
+            });
+            html += '</div>';
+            
+            document.getElementById('reportContent').innerHTML = html;
+        }
+
+        // Render entry card
+        function renderEntryCard(entry) {
+            let html = `<div class="entry-card">`;
+            html += `<div class="entry-time">${formatTime(entry.timestamp)}</div>`;
+            
+            if (entry.distractions) {
+                html += `<div class="entry-field">`;
+                html += `<span class="field-label">Distractions:</span>`;
+                html += `<span class="field-content">${entry.distractions}</span>`;
+                if (entry.distractions_followup) {
+                    html += `<span class="followup-badge">FOLLOWUP</span>`;
+                }
+                html += `</div>`;
+            }
+            
+            if (entry.concerns) {
+                html += `<div class="entry-field">`;
+                html += `<span class="field-label">Concerns:</span>`;
+                html += `<span class="field-content">${entry.concerns}</span>`;
+                if (entry.concerns_followup) {
+                    html += `<span class="followup-badge">FOLLOWUP</span>`;
+                }
+                html += `</div>`;
+            }
+            
+            if (entry.to_plan) {
+                html += `<div class="entry-field">`;
+                html += `<span class="field-label">To Plan:</span>`;
+                html += `<span class="field-content">${entry.to_plan}</span>`;
+                if (entry.to_plan_followup) {
+                    html += `<span class="followup-badge">FOLLOWUP</span>`;
+                }
+                html += `</div>`;
+            }
+            
+            if (entry.fear) {
+                html += `<div class="entry-field">`;
+                html += `<span class="field-label">Fear:</span>`;
+                html += `<span class="field-content">${entry.fear}</span>`;
+                if (entry.fear_followup) {
+                    html += `<span class="followup-badge">FOLLOWUP</span>`;
+                }
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            return html;
+        }
+
+        // Export to CSV
+        function exportReports() {
+            if (entries.length === 0) {
+                alert('No data to export. Please load reports first.');
+                return;
+            }
+            
+            let csv = 'Date,Time,Time of Day,Distractions,Distractions Followup,Concerns,Concerns Followup,To Plan,To Plan Followup,Fear,Fear Followup\n';
+            
+            entries.forEach(e => {
+                const time = formatTime(e.timestamp);
+                csv += `"${e.date}","${time}","${e.time_of_day}",`;
+                csv += `"${e.distractions || ''}","${e.distractions_followup ? 'Yes' : 'No'}",`;
+                csv += `"${e.concerns || ''}","${e.concerns_followup ? 'Yes' : 'No'}",`;
+                csv += `"${e.to_plan || ''}","${e.to_plan_followup ? 'Yes' : 'No'}",`;
+                csv += `"${e.fear || ''}","${e.fear_followup ? 'Yes' : 'No'}"\n`;
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mind_tracking_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        // Format time from timestamp
+        function formatTime(timestamp) {
+            if (timestamp && timestamp.toDate) {
+                return timestamp.toDate().toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+            }
+            return '';
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentView = e.target.dataset.view;
+                if (entries.length > 0) {
+                    displayReports();
+                }
+            });
+        });
+
+        // Initialize
+        initializeDates();
+    </script>
+</body>
+</html>

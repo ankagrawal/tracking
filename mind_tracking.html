@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Tracking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .navigation a {
+            color: #4CAF50;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+        .form-group {
+            margin-bottom: 25px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background-color: #fafafa;
+        }
+        .form-group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            color: #555;
+            font-size: 16px;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            font-size: 14px;
+            color: #666;
+        }
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-height: 80px;
+            resize: vertical;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        .datetime-info {
+            text-align: center;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            color: #2e7d32;
+        }
+        .datetime-info strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .message {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .previous-entries {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f0f8ff;
+            border-radius: 4px;
+            border-left: 4px solid #2196F3;
+        }
+        .previous-entries h3 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+        .entry-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 3px;
+        }
+        .entry-time {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .entry-content {
+            font-size: 14px;
+        }
+        .followup-indicator {
+            display: inline-block;
+            padding: 2px 6px;
+            background-color: #ff9800;
+            color: white;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="navigation">
+            <a href="index.html">← Home</a> | 
+            <a href="mind_reports.html">View Mind Reports</a> | 
+            <a href="start_day.html">Start Day</a> | 
+            <a href="end_day.html">End Day</a>
+        </div>
+        
+        <h1>Mind Tracking</h1>
+        
+        <div class="datetime-info">
+            <strong>Current Date & Time:</strong>
+            <span id="currentDateTime"></span>
+        </div>
+
+        <div id="message"></div>
+        
+        <form id="mindTrackingForm">
+            <div class="form-group">
+                <div class="form-group-header">
+                    <label for="distractions">Distractions</label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="distractions_followup" name="distractions_followup">
+                        Followup needed?
+                    </label>
+                </div>
+                <textarea id="distractions" name="distractions" placeholder="What's distracting your mind right now?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <div class="form-group-header">
+                    <label for="concerns">Concerns</label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="concerns_followup" name="concerns_followup">
+                        Followup needed?
+                    </label>
+                </div>
+                <textarea id="concerns" name="concerns" placeholder="What concerns are weighing on your mind?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <div class="form-group-header">
+                    <label for="to_plan">To Plan</label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="to_plan_followup" name="to_plan_followup">
+                        Followup needed?
+                    </label>
+                </div>
+                <textarea id="to_plan" name="to_plan" placeholder="What do you need to plan or organize?"></textarea>
+            </div>
+
+            <div class="form-group">
+                <div class="form-group-header">
+                    <label for="fear">Fear</label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="fear_followup" name="fear_followup">
+                        Followup needed?
+                    </label>
+                </div>
+                <textarea id="fear" name="fear" placeholder="What fears or anxieties are present?"></textarea>
+            </div>
+
+            <button type="submit" id="submitBtn">Submit Mind Tracking</button>
+        </form>
+
+        <div id="previousEntries" class="previous-entries" style="display:none;">
+            <h3>Today's Previous Entries</h3>
+            <div id="entriesList"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, limit, Timestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAv2tgr09braWjrKSsyZNbw9ZgdGyrZIDM",
+            authDomain: "tracking-17d26.firebaseapp.com",
+            projectId: "tracking-17d26",
+            storageBucket: "tracking-17d26.firebasestorage.app",
+            messagingSenderId: "506730679610",
+            appId: "1:506730679610:web:8f28cbc0a5f05f37ab1403"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Update current date and time
+        function updateDateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            document.getElementById('currentDateTime').textContent = 
+                now.toLocaleDateString('en-US', options);
+        }
+
+        // Get time of day category
+        function getTimeOfDay() {
+            const hour = new Date().getHours();
+            if (hour < 6) return 'early_morning';
+            if (hour < 12) return 'morning';
+            if (hour < 17) return 'afternoon';
+            if (hour < 21) return 'evening';
+            return 'night';
+        }
+
+        // Load today's previous entries
+        async function loadTodayEntries() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const q = query(
+                    collection(db, 'mind_tracking'),
+                    where('date', '==', today),
+                    orderBy('timestamp', 'desc'),
+                    limit(5)
+                );
+                
+                const snapshot = await getDocs(q);
+                if (!snapshot.empty) {
+                    const entriesDiv = document.getElementById('entriesList');
+                    entriesDiv.innerHTML = '';
+                    
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const entryDiv = document.createElement('div');
+                        entryDiv.className = 'entry-item';
+                        
+                        const time = data.timestamp.toDate().toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        });
+                        
+                        let content = `<div class="entry-time">${time} - ${data.time_of_day.replace('_', ' ')}</div>`;
+                        content += '<div class="entry-content">';
+                        
+                        if (data.distractions) {
+                            content += `<strong>Distractions:</strong> ${data.distractions.substring(0, 50)}...`;
+                            if (data.distractions_followup) content += '<span class="followup-indicator">FOLLOWUP</span>';
+                            content += '<br>';
+                        }
+                        if (data.concerns) {
+                            content += `<strong>Concerns:</strong> ${data.concerns.substring(0, 50)}...`;
+                            if (data.concerns_followup) content += '<span class="followup-indicator">FOLLOWUP</span>';
+                            content += '<br>';
+                        }
+                        
+                        content += '</div>';
+                        entryDiv.innerHTML = content;
+                        entriesDiv.appendChild(entryDiv);
+                    });
+                    
+                    document.getElementById('previousEntries').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading previous entries:', error);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('mindTrackingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const messageDiv = document.getElementById('message');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            try {
+                const formData = new FormData(e.target);
+                const now = new Date();
+                
+                // Prepare data
+                const data = {
+                    date: now.toISOString().split('T')[0],
+                    timestamp: Timestamp.now(),
+                    time_of_day: getTimeOfDay(),
+                    distractions: formData.get('distractions')?.trim() || '',
+                    distractions_followup: document.getElementById('distractions_followup').checked,
+                    concerns: formData.get('concerns')?.trim() || '',
+                    concerns_followup: document.getElementById('concerns_followup').checked,
+                    to_plan: formData.get('to_plan')?.trim() || '',
+                    to_plan_followup: document.getElementById('to_plan_followup').checked,
+                    fear: formData.get('fear')?.trim() || '',
+                    fear_followup: document.getElementById('fear_followup').checked
+                };
+                
+                // Check if at least one field has content
+                if (!data.distractions && !data.concerns && !data.to_plan && !data.fear) {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = 'Please fill in at least one field';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Mind Tracking';
+                    return;
+                }
+                
+                // Save to Firestore
+                await addDoc(collection(db, 'mind_tracking'), data);
+                
+                messageDiv.className = 'message success';
+                messageDiv.textContent = 'Mind tracking entry saved successfully!';
+                
+                // Clear form
+                e.target.reset();
+                
+                // Reload previous entries
+                loadTodayEntries();
+                
+                // Update time
+                updateDateTime();
+                
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Error saving entry. Please try again.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Mind Tracking';
+            }
+        });
+
+        // Initialize
+        updateDateTime();
+        setInterval(updateDateTime, 60000); // Update every minute
+        loadTodayEntries();
+    </script>
+</body>
+</html>
