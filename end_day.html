@@ -219,8 +219,16 @@
         }
 
         // Render the form with questions grouped by category
-        function renderForm() {
+        function renderForm(preserveDate = false) {
             const formContent = document.getElementById('formContent');
+            
+            // Save current date value if preserving
+            let currentDateValue = null;
+            if (preserveDate) {
+                const existingDateInput = document.getElementById('question_date');
+                currentDateValue = existingDateInput?.value;
+            }
+            
             formContent.innerHTML = '';
 
             // Group questions by category order
@@ -254,15 +262,22 @@
             // Show submit button
             document.getElementById('submitBtn').style.display = 'block';
             
-            // Set today's date by default
+            // Set date and add listener
             const dateInput = document.getElementById('question_date');
             if (dateInput) {
-                const today = new Date().toISOString().split('T')[0];
-                dateInput.value = today;
+                // Use preserved date, or today's date as default
+                dateInput.value = currentDateValue || new Date().toISOString().split('T')[0];
+                
+                // Add date change listener
+                dateInput.addEventListener('change', (e) => {
+                    loadStartDayResponse(e.target.value);
+                });
             }
 
-            // Load today's start response
-            loadStartDayResponse();
+            // Only load start response on initial render
+            if (!preserveDate) {
+                loadStartDayResponse();
+            }
         }
 
         // Create a question element
@@ -315,14 +330,16 @@
             return div;
         }
 
-        // Load today's start day response
-        async function loadStartDayResponse() {
+        // Load start day response for a specific date
+        async function loadStartDayResponse(dateOverride = null) {
             try {
-                const today = new Date().toISOString().split('T')[0];
+                // Use provided date or get from date input
+                const targetDate = dateOverride || document.getElementById('question_date')?.value || new Date().toISOString().split('T')[0];
+                
                 const q = query(
                     collection(db, 'daily_reflections'),
                     where('formType', '==', 'start'),
-                    where('date', '==', today),
+                    where('date', '==', targetDate),
                     limit(1)
                 );
                 
@@ -331,8 +348,15 @@
                     startDayData = snapshot.docs[0].data();
                     displayStartResponse(startDayData);
                     
-                    // Re-render form to show comparisons
-                    renderForm();
+                    // Re-render form to show comparisons, preserving date
+                    renderForm(true);
+                } else {
+                    // No start data for this date - clear previous data
+                    startDayData = null;
+                    document.getElementById('startResponse').style.display = 'none';
+                    
+                    // Re-render form to remove comparisons, preserving date
+                    renderForm(true);
                 }
             } catch (error) {
                 console.error('Error loading start response:', error);
