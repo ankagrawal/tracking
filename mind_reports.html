@@ -293,13 +293,12 @@
             document.getElementById('reportContent').innerHTML = '<div class="loading">Loading reports...</div>';
             
             try {
-                // Query entries
+                // Query entries - simplified to avoid composite index requirement
                 const q = query(
                     collection(db, 'mind_tracking'),
                     where('date', '>=', dateFrom),
                     where('date', '<=', dateTo),
-                    orderBy('date', 'desc'),
-                    orderBy('timestamp', 'desc')
+                    orderBy('date', 'desc')
                 );
                 
                 const snapshot = await getDocs(q);
@@ -315,6 +314,13 @@
                         data.fear_followup) {
                         entries.push(data);
                     }
+                });
+                
+                // Sort entries by timestamp after fetching
+                entries.sort((a, b) => {
+                    const timeA = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
+                    const timeB = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+                    return timeB - timeA; // Descending order
                 });
                 
                 displayReports();
